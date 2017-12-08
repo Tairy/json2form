@@ -1,29 +1,31 @@
 "use strict";
 
 var _domCount = 2;
-var _nodeCount = 1;
 var _keyValueDom = '<div class="key-value-pair-control"><div class="row"> \
     <div class="form-group col-md-6"> \
       <label>Key</label> \
-      <input type="text" class="form-control key" placeholder="Key"> \
+      <input class="form-control key" placeholder="Key"> \
     </div> \
     <div class="form-group col-md-6"> \
       <label>Value</label> \
-      <input type="text" class="form-control value" placeholder="Value"> \
+      <input class="form-control value" placeholder="Value"> \
     </div> \
   </div> \
   <div class="row col-md-12"> \
     <a href="javascript:void(0);" class="btn btn-info btn-xs add-children"> \
-      <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>&nbsp;Add Child \
+      <span class="glyphicon glyphicon-plus"></span>&nbsp;Add Child \
     </a> \
     <a href="javascript:void(0);" class="btn btn-danger btn-xs remove-form"> \
-      <span class="glyphicon glyphicon-minus" aria-hidden="true"></span>&nbsp;Remove \
+      <span class="glyphicon glyphicon-minus"></span>&nbsp;Remove \
     </a> \
   </div></div>';
 
 function genNode(pid, marginLeft, key, value) {
+    if (!pid) {
+        pid = 0;
+    }
     var dom = $(_keyValueDom);
-    dom.find('.key').val('id:' + _domCount + 'pid:' + pid);
+    dom.find('.key').val(key);
     dom.find('.value').val(value);
     dom.data('id', _domCount);
     dom.data('pid', pid);
@@ -84,7 +86,7 @@ function listToTree(list) {
     }
     for (i = 0; i < list.length; i += 1) {
         node = list[i];
-        if (node.pid !== 0) {
+        if (Number(node.pid) !== 0) {
             list[map[node.pid]].children.push(node);
         } else {
             roots.push(node);
@@ -99,30 +101,24 @@ function treeToJson(root, parent) {
     } else {
         parent[root.kv.key] = {};
         for (var child in root.children) {
-            treeToJson(root.children[child], parent[root.kv.key]);
+            if (root.children.hasOwnProperty(child)) {
+                treeToJson(root.children[child], parent[root.kv.key]);
+            }
         }
     }
 }
 
-function jsonToList(json, list, pid) {
+function jsonToDom(json, dom, pid) {
     Object.keys(json).forEach(function (key) {
-        var pair = {};
-        pair['key'] = key;
+        var value = '';
         if (typeof json[key] === 'string' || json[key] instanceof String) {
-            pair['value'] = json[key];
-        } else {
-            pair['value'] = '';
+            value = json[key];
         }
-        list.push({
-            'pid': pid,
-            'id': _nodeCount,
-            'kv': pair,
-        });
-
+        var newDom = genNode(pid, 0, key, value);
+        dom.push(newDom);
         if (typeof json[key] === 'object' || json[key] instanceof Object) {
-            jsonToList(json[key], list, _nodeCount);
+            jsonToDom(json[key], dom, _domCount - 1);
         }
-        _nodeCount++;
     });
 }
 
@@ -134,7 +130,6 @@ jQuery(document).ready(function ($) {
     $(document).on('click', '.add-children', function () {
         var parent = $(this).parent('div').parent('div');
         var pid = parent.data('id');
-        var pLevel = parent.data('level');
         var marginLeft = parseInt(parent.css('margin-left'));
         parent.after(genNode(pid, marginLeft));
     });
@@ -149,16 +144,16 @@ jQuery(document).ready(function ($) {
     $(document).on('click', '.submit', function () {
         var keyValuePairArr = [];
         $('.key-value-pair-control').each(function (index, el) {
-            var el = $(el);
-            var key = el.find('.key').val();
-            var value = el.find('.value').val();
+            var elDom = $(el);
+            var key = elDom.find('.key').val();
+            var value = elDom.find('.value').val();
             var pair = {};
             pair['key'] = key;
             pair['value'] = value;
             keyValuePairArr.push({
-                'pid': el.data('pid'),
-                'id': el.data('id'),
-                'kv': pair,
+                'pid': elDom.data('pid'),
+                'id': elDom.data('id'),
+                'kv': pair
             });
         });
 
@@ -167,7 +162,9 @@ jQuery(document).ready(function ($) {
         var json = {};
 
         for (var child in tree) {
-            treeToJson(tree[child], json);
+            if (tree.hasOwnProperty(child)) {
+                treeToJson(tree[child], json);
+            }
         }
         $('.result').val(JSON.stringify(json));
     });
@@ -175,12 +172,12 @@ jQuery(document).ready(function ($) {
         var json = $('.result').val();
         if (json) {
             var originJson = jQuery.parseJSON(json);
-            var list = [];
-            jsonToList(originJson, list, 0);
-            var tree = listToTree(list);
-            console.log(tree);
-            // iterator1(originJson);
-            // console.log(originJson);
+            var dom = [];
+            jsonToDom(originJson, dom, 0);
+            for (var d in dom) {
+                console.log(dom[d]);
+                $('.main-container').append(dom[d]);
+            }
         }
     });
 });
