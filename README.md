@@ -1,6 +1,9 @@
 # json2form
-json to form &amp; form to json
+
+### Convert key-value pair form to json.
 
 ![form2json](https://github.com/Tairy/json2form/blob/master/screenshots/form2json.gif)
+
+### Edit key-value pair json.
 
 ![json2form](https://github.com/Tairy/json2form/blob/master/screenshots/json2form.gif)
