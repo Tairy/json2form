@@ -114,10 +114,11 @@ function jsonToDom(json, dom, pid, marginLeft) {
         }
 
         var newDom = genNode(pid, marginLeft, key, value);
-        if(_domCount === 3) {
+        if (_domCount === 3) {
             var firstDom = $('div[data-id="1"]');
             firstDom.find('.key').val(key);
             firstDom.find('.value').val(value);
+            firstDom.data('id', _domCount - 1);
         } else {
             dom.push(newDom);
         }
