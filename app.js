@@ -31,9 +31,7 @@ function genNode(pid, marginLeft, key, value) {
     dom.data('pid', pid);
 
     if (Number(pid) > 0) {
-        var newMarginLeft = marginLeft + 15;
-        newMarginLeft = newMarginLeft + 'px';
-        dom.css('margin-left', newMarginLeft);
+        dom.css('margin-left', marginLeft);
     }
 
     _domCount++;
@@ -59,15 +57,15 @@ function sonsTree(arr, id) {
 function remNode(id) {
     var keyValuePairArr = [];
     $('.key-value-pair-control').each(function (index, el) {
-        var el = $(el);
-        var key = el.find('.key').val();
-        var value = el.find('.value').val();
+        var elDom = $(el);
+        var key = elDom.find('.key').val();
+        var value = elDom.find('.value').val();
         var pair = {};
         pair[key] = value;
         keyValuePairArr.push({
-            'pid': el.data('pid'),
-            'id': el.data('id'),
-            'dom': el
+            'pid': elDom.data('pid'),
+            'id': elDom.data('id'),
+            'dom': elDom
         });
     });
 
@@ -108,16 +106,24 @@ function treeToJson(root, parent) {
     }
 }
 
-function jsonToDom(json, dom, pid) {
+function jsonToDom(json, dom, pid, marginLeft) {
     Object.keys(json).forEach(function (key) {
         var value = '';
         if (typeof json[key] === 'string' || json[key] instanceof String) {
             value = json[key];
         }
-        var newDom = genNode(pid, 0, key, value);
-        dom.push(newDom);
+
+        var newDom = genNode(pid, marginLeft, key, value);
+        if(_domCount === 3) {
+            var firstDom = $('div[data-id="1"]');
+            firstDom.find('.key').val(key);
+            firstDom.find('.value').val(value);
+        } else {
+            dom.push(newDom);
+        }
+
         if (typeof json[key] === 'object' || json[key] instanceof Object) {
-            jsonToDom(json[key], dom, _domCount - 1);
+            jsonToDom(json[key], dom, _domCount - 1, marginLeft + 15);
         }
     });
 }
@@ -131,7 +137,9 @@ jQuery(document).ready(function ($) {
         var parent = $(this).parent('div').parent('div');
         var pid = parent.data('id');
         var marginLeft = parseInt(parent.css('margin-left'));
-        parent.after(genNode(pid, marginLeft));
+        var newMarginLeft = marginLeft + 15;
+        newMarginLeft = newMarginLeft + 'px';
+        parent.after(genNode(pid, newMarginLeft));
     });
 
     $(document).on('click', '.remove-form', function () {
@@ -173,9 +181,8 @@ jQuery(document).ready(function ($) {
         if (json) {
             var originJson = jQuery.parseJSON(json);
             var dom = [];
-            jsonToDom(originJson, dom, 0);
+            jsonToDom(originJson, dom, 0, 0);
             for (var d in dom) {
-                console.log(dom[d]);
                 $('.main-container').append(dom[d]);
             }
         }
